@@ -21,31 +21,36 @@ public class APIController {
 
 	@Autowired
 	private JwtUtil jwtUtil;
-	
+
 	@Autowired
 	private AuthenticationManager authenticationManager;
-	
+
 	@RequestMapping("/")
 	public ResponseEntity<Map<String, Object>> home(){
 
 		Map<String, Object> map = new HashMap<String, Object>();	
-		map.put("Status", "success");
-		
+		map.put("status", "success");
+
 		return new ResponseEntity<Map<String,Object>>(map, HttpStatus.OK);
 	}
 
 	@PostMapping("/authenticate")
-	public String authenticate(@RequestBody AuthenticateRequest authenticateRequest) throws Exception {
-		
+	public ResponseEntity<Map<String, Object>> authenticate(@RequestBody AuthenticateRequest authenticateRequest) throws Exception {
+
+		Map<String, Object> map = new HashMap<String, Object>();	
+
 		try {
 			authenticationManager.authenticate(
 					new UsernamePasswordAuthenticationToken(authenticateRequest.getUsername(), authenticateRequest.getPassword())
 					);
-			
+
 		} catch (Exception e) {
-//			throw new Exception("Invalid username / password");
-			return "Invalid username / password";
+			map.put("status", "failed");
+			map.put("msg", "Invalid username / password");
+			return new ResponseEntity<Map<String,Object>>(map, HttpStatus.FAILED_DEPENDENCY);
 		}
-		return jwtUtil.generateToken(authenticateRequest.getUsername());
+		map.put("status", "success");
+		map.put("token", jwtUtil.generateToken(authenticateRequest.getUsername()));
+		return new ResponseEntity<Map<String,Object>>(map, HttpStatus.OK);
 	}
 }
